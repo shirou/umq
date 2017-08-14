@@ -1,5 +1,6 @@
 package umq
 
+// Message is a message
 type Message struct {
 	Body      []byte
 	MessageID string
