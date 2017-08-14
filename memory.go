@@ -59,9 +59,10 @@ func (q *MemoryQueue) Receive(opts ...Option) (Message, error) {
 
 func (q *MemoryQueue) ReceiveWithContext(ctx context.Context, opts ...Option) (Message, error) {
 	ch := make(chan Message)
+	defer close(ch)
 	go func(ch chan Message) {
-		c := time.Tick(1 * time.Millisecond)
-		for range c {
+		tick := time.Tick(1 * time.Millisecond)
+		for range tick {
 			if len(q.queue) > 0 {
 				q.lock.Lock()
 				defer q.lock.Unlock()
