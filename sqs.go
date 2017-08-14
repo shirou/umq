@@ -42,6 +42,7 @@ func (tr *SQSTransport) GetQueue(key string, opts ...Option) (Queue, error) {
 		svc:       tr.svc,
 		QueueName: key,
 		QueueURL:  resultURL,
+		IsConsume: true,
 	}, nil
 }
 
@@ -69,6 +70,7 @@ type SQSQueue struct {
 	svc       *sqs.SQS
 	QueueName string
 	QueueURL  *sqs.GetQueueUrlOutput
+	IsConsume bool
 }
 
 func (q *SQSQueue) Close() error {
@@ -101,7 +103,18 @@ func (q *SQSQueue) ReceiveWithContext(ctx context.Context, opts ...Option) (Mess
 		return Message{}, fmt.Errorf("empty message recieved")
 	}
 
-	return q.sqsMsgToMessage(result.Messages[0]) // only need first message
+	// only need first message
+	msg, err := q.sqsMsgToMessage(result.Messages[0])
+	if err != nil {
+		return Message{}, fmt.Errorf("unable to convert msg %v, %v", result.Messages[0], err)
+	}
+	if q.IsConsume {
+		if err := q.DeleteWithContext(ctx, msg); err != nil {
+			return msg, err
+		}
+	}
+
+	return msg, nil
 }
 
 func (q *SQSQueue) Delete(msg Message, opts ...Option) error {

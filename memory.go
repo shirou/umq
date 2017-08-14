@@ -23,7 +23,8 @@ func (q *MemoryTransport) Connect(url string) error {
 
 func (tr *MemoryTransport) GetQueue(key string, opts ...Option) (Queue, error) {
 	queue := &MemoryQueue{
-		lock: new(sync.RWMutex),
+		lock:      new(sync.RWMutex),
+		IsConsume: true,
 	}
 	for _, opt := range opts {
 		if !optionAvailable("memory", opt.Target()) {
@@ -42,6 +43,7 @@ func (tr *MemoryTransport) GetQueue(key string, opts ...Option) (Queue, error) {
 type MemoryQueue struct {
 	QueueName string
 	queue     []Message
+	IsConsume bool
 	lock      *sync.RWMutex
 }
 
@@ -75,6 +77,11 @@ func (q *MemoryQueue) ReceiveWithContext(ctx context.Context, opts ...Option) (M
 	case <-ctx.Done():
 		return Message{}, ctx.Err()
 	case msg := <-ch:
+		if q.IsConsume {
+			if err := q.DeleteWithContext(ctx, msg); err != nil {
+				return msg, err
+			}
+		}
 		return msg, nil
 	}
 

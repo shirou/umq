@@ -37,6 +37,24 @@ func TestMemoryQueue(t *testing.T) {
 		assert.Nil(err)
 		body := []byte("A")
 		var wg sync.WaitGroup
+		go func() {
+			wg.Add(1)
+			defer wg.Done()
+			msg, err := q.Receive()
+			assert.Nil(err)
+			assert.Equal(body, msg.GetBody())
+		}()
+		time.Sleep(1 * time.Second)
+		q.Send(Message{Body: body})
+		wg.Wait()
+	})
+	t.Run("consume_option", func(t *testing.T) {
+		q, err := tr.GetQueue(queueName,
+			NewConsumeOption(false),
+		)
+		assert.Nil(err)
+		body := []byte("A")
+		var wg sync.WaitGroup
 		var mid string
 		go func() {
 			wg.Add(1)

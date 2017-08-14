@@ -17,7 +17,7 @@ type Transport interface {
 }
 
 type Option interface {
-	Target() string
+	Target() []TransportType
 	Apply(Queue) error
 }
 
@@ -34,9 +34,12 @@ type Queue interface {
 	SendWithContext(context.Context, Message, ...Option) error
 }
 
-func optionAvailable(target, opt string) bool {
-	if opt == "any" || target == opt {
-		return true
+func optionAvailable(target TransportType, opt []TransportType) bool {
+	for _, opt := range opt {
+		if opt == TransportAny || opt == target {
+			return true
+		}
 	}
+
 	return false
 }
