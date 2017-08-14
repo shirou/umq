@@ -7,30 +7,37 @@ same as kombu
 
 
 ```
-    // create transport
-	tr := NewSQSTransport(&aws.Config{
-		Endpoint: aws.String("http://localhost:9324"),
-		Region:   aws.String("us-east-1"),
-	})
-    // connect transport
-	assert.Nil(tr.Connect("0.0.0.0:9324"))
+// create transport
+tr := NewSQSTransport(&aws.Config{
+Endpoint: aws.String("http://localhost:9324"),
+Region:   aws.String("us-east-1"),
+})
 
-    // get queue by queue name
-	q, err := tr.GetQueue(queueName)
+// connect transport
+tr.Connect()
 
-    // send message.
-    q.Send(Message{Body: body})
+// get queue by queue name
+q, err := tr.GetQueue(queueName)
 
-    // recieve. this function blocks.
-    msg, err := q.Receive()
+// send message.
+q.Send(Message{Body: body})
+
+// recieve. this function blocks.
+msg, err := q.Receive()
+
+// If you want to timeout or cancel, use context
+ctx := context.WithTimeout(context.Background())
+q.SendWithContext(ctx, Message{Body: body})
+msg, err := q.Receive(ctx)
+
 ```
 
 Message is an abstract message which has body, `[]byte`.
 
 ```
 type Message struct {
-	Body      []byte
-	MessageID string
+Body      []byte
+MessageID string
 }
 ```
 
